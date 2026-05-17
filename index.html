@@ -1,0 +1,2163 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RBE Select — Gestão</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: 'Segoe UI', system-ui, sans-serif;
+        background: #fdf8f0;
+        min-height: 100vh;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root">
+      <div
+        style="
+          height: 100vh;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 18px;
+          color: #0f2445;
+          font-family: Georgia, serif;
+        "
+      >
+        🔥 Carregando RBE Select...
+      </div>
+    </div>
+
+    <script type="module">
+      import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+      import {
+        getFirestore,
+        collection,
+        getDocs,
+        addDoc,
+        updateDoc,
+        deleteDoc,
+        doc,
+      } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+      const cfg = {
+        apiKey: 'AIzaSyC6JAbJTc-HWrDBKTgPRitx4xFK29-1H10',
+        authDomain: 'rbecarreira.firebaseapp.com',
+        projectId: 'rbecarreira',
+        storageBucket: 'rbecarreira.firebasestorage.app',
+        messagingSenderId: '390907131123',
+        appId: '1:390907131123:web:3b5c96af40ca778f893386',
+      };
+      const app = initializeApp(cfg);
+      const db = getFirestore(app);
+      window._db = db;
+      window._col = (n) => collection(db, n);
+      window._getDocs = getDocs;
+      window._addDoc = addDoc;
+      window._updateDoc = updateDoc;
+      window._deleteDoc = deleteDoc;
+      window._doc = doc;
+      window._firebaseReady = true;
+      window.dispatchEvent(new Event('firebaseReady'));
+    </script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+
+    <script type="text/babel">
+      const { useState, useEffect } = React;
+      const C = {
+        navy: '#0F2445',
+        navyL: '#1A3A6B',
+        gold: '#D4A017',
+        goldL: '#F0C040',
+        cream: '#FDF8F0',
+        white: '#FFFFFF',
+        g50: '#F8F9FA',
+        g100: '#F1F3F5',
+        g200: '#E9ECEF',
+        g400: '#ADB5BD',
+        g600: '#6C757D',
+        g800: '#343A40',
+        green: '#1B7A4A',
+        greenL: '#D4EDDA',
+        yellow: '#856404',
+        yellowL: '#FFF3CD',
+        red: '#842029',
+        redL: '#F8D7DA',
+        blue: '#084298',
+        blueL: '#CFE2FF',
+        purple: '#5C2D91',
+        purpleL: '#E8D5FF',
+      };
+
+      const SERVICOS = [
+        'Elaboração de Currículo',
+        'Otimização de LinkedIn (Básico)',
+        'Currículo em Inglês',
+        'Currículo Europass',
+        'Carta de Apresentação',
+        'Cadastro em Sites de Vagas',
+        'Cadastro em Sites de Empresas Específicas',
+        'Pacote Básico - Currículo + LinkedIn',
+        'Pacote Completo - Currículo + LinkedIn + Carta de Apresentação',
+        'Pacote Premium - LinkedIn Estratégico + Carta + Cadastro em 1 site + Apostilas',
+        'Pacote Premium Plus - Premium + Currículo em Inglês',
+        'Outro',
+      ];
+      const PRECOS = {
+        'Reformulação de Currículo': 149.9,
+        'Otimização LinkedIn': 129.9,
+        'Cadastros em Sites': 89.9,
+        'Corpo de E-mail': 59.9,
+        'Simulação de Entrevista': 99.9,
+        'Pacote Essencial (Currículo + LinkedIn)': 199.9,
+        'Pacote Profissional (+ Cadastros)': 269.9,
+        'Pacote Completo (+ E-mail)': 319.9,
+        'Pacote Premium (+ Simulação)': 399.9,
+        Outro: 0,
+      };
+      const S_SERV = [
+        { l: 'Aguardando', c: C.blue, bg: C.blueL, i: '⏳' },
+        { l: 'Em Andamento', c: C.yellow, bg: C.yellowL, i: '🔄' },
+        { l: 'Concluído', c: C.green, bg: C.greenL, i: '✅' },
+        { l: 'Cancelado', c: C.red, bg: C.redL, i: '❌' },
+        { l: 'Pausado', c: C.purple, bg: C.purpleL, i: '⏸️' },
+      ];
+      const S_PGTO = [
+        { l: 'Pendente', c: C.yellow, bg: C.yellowL, i: '⏳' },
+        { l: 'Pago', c: C.green, bg: C.greenL, i: '✅' },
+        { l: 'Parcelado', c: C.blue, bg: C.blueL, i: '🔄' },
+        { l: 'Cancelado', c: C.red, bg: C.redL, i: '❌' },
+      ];
+      const FORMAS = [
+        'Pix',
+        'Cartão Crédito',
+        'Cartão Débito',
+        'Transferência',
+        'Dinheiro',
+        'Boleto',
+      ];
+      const MESES = [
+        'Jan',
+        'Fev',
+        'Mar',
+        'Abr',
+        'Mai',
+        'Jun',
+        'Jul',
+        'Ago',
+        'Set',
+        'Out',
+        'Nov',
+        'Dez',
+      ];
+      const USERS = {
+        admin: { name: 'Admin', role: 'admin', pass: 'rbe@admin2025' },
+        operador1: {
+          name: 'Operador 1',
+          role: 'operador',
+          pass: 'op1@rbe2025',
+        },
+        operador2: {
+          name: 'Operador 2',
+          role: 'operador',
+          pass: 'op2@rbe2025',
+        },
+      };
+
+      const hoje = () => new Date().toISOString().split('T')[0];
+      const moeda = (v) =>
+        'R$ ' +
+        Number(v || 0)
+          .toFixed(2)
+          .replace('.', ',')
+          .replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+      const fdata = (d) =>
+        d ? new Date(d + 'T12:00:00').toLocaleDateString('pt-BR') : '—';
+      const gid = () => 'PED' + Date.now().toString().slice(-6);
+      function adicionarDiasUteis(data, dias) {
+        let resultado = new Date(data);
+        let adicionados = 0;
+
+        while (adicionados < dias) {
+          resultado.setDate(resultado.getDate() + 1);
+
+          const dia = resultado.getDay();
+
+          if (dia !== 0 && dia !== 6) {
+            adicionados++;
+          }
+        }
+
+        return resultado;
+      }
+
+      function diasUteisRestantes(dataFinal) {
+        let hoje = new Date();
+        let final = new Date(dataFinal);
+        let dias = 0;
+
+        while (hoje < final) {
+          hoje.setDate(hoje.getDate() + 1);
+
+          const dia = hoje.getDay();
+
+          if (dia !== 0 && dia !== 6) {
+            dias++;
+          }
+        }
+
+        return dias;
+      }
+      const fo = (e) => (e.target.style.borderColor = C.gold);
+      const bl = (e) => (e.target.style.borderColor = C.g200);
+
+      const fbSave = async (p) => {
+        const col = window._col('pedidos');
+        if (p._fbId) {
+          const { _fbId, ...d } = p;
+          await window._updateDoc(
+            window._doc(window._db, 'pedidos', p._fbId),
+            d
+          );
+          return p;
+        }
+        const { _fbId, ...d } = p;
+        const r = await window._addDoc(col, d);
+        return { ...p, _fbId: r.id };
+      };
+      const fbDel = async (id) =>
+        await window._deleteDoc(window._doc(window._db, 'pedidos', id));
+      const fbLoad = async () => {
+        const s = await window._getDocs(window._col('pedidos'));
+        return s.docs.map((d) => ({ ...d.data(), _fbId: d.id }));
+      };
+
+      function Badge({ status, tipo = 'serv' }) {
+        const lst = tipo === 'serv' ? S_SERV : S_PGTO;
+        const s = lst.find((x) => x.l === status) || lst[0];
+        return React.createElement(
+          'span',
+          {
+            style: {
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 4,
+              padding: '3px 10px',
+              borderRadius: 20,
+              fontSize: 12,
+              fontWeight: 600,
+              color: s.c,
+              background: s.bg,
+              border: '1px solid ' + s.c + '33',
+              whiteSpace: 'nowrap',
+            },
+          },
+          s.i + ' ' + s.l
+        );
+      }
+
+      function Inp({ label, ...p }) {
+        return React.createElement(
+          'div',
+          { style: { display: 'flex', flexDirection: 'column', gap: 4 } },
+          label &&
+            React.createElement(
+              'label',
+              {
+                style: {
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: C.g600,
+                  textTransform: 'uppercase',
+                  letterSpacing: 0.5,
+                },
+              },
+              label
+            ),
+          React.createElement('input', {
+            ...p,
+            onFocus: fo,
+            onBlur: bl,
+            style: {
+              padding: '9px 12px',
+              borderRadius: 8,
+              outline: 'none',
+              fontFamily: 'inherit',
+              fontSize: 14,
+              color: C.g800,
+              background: C.white,
+              border: '1.5px solid ' + C.g200,
+              ...p.style,
+            },
+          })
+        );
+      }
+
+      function Sel({ label, options, ...p }) {
+        return React.createElement(
+          'div',
+          { style: { display: 'flex', flexDirection: 'column', gap: 4 } },
+          label &&
+            React.createElement(
+              'label',
+              {
+                style: {
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: C.g600,
+                  textTransform: 'uppercase',
+                  letterSpacing: 0.5,
+                },
+              },
+              label
+            ),
+          React.createElement(
+            'select',
+            {
+              ...p,
+              onFocus: fo,
+              onBlur: bl,
+              style: {
+                padding: '9px 12px',
+                borderRadius: 8,
+                outline: 'none',
+                fontFamily: 'inherit',
+                fontSize: 14,
+                color: C.g800,
+                background: C.white,
+                cursor: 'pointer',
+                border: '1.5px solid ' + C.g200,
+              },
+            },
+            options.map((o) =>
+              React.createElement(
+                'option',
+                { key: o.v || o, value: o.v || o },
+                o.t || o
+              )
+            )
+          )
+        );
+      }
+
+      function Btn({ children, v = 'pri', sm, ...p }) {
+        const vs = {
+          pri: { background: C.navy, color: C.white, border: 'none' },
+          gold: { background: C.gold, color: C.navy, border: 'none' },
+          out: {
+            background: 'transparent',
+            color: C.navy,
+            border: '1.5px solid ' + C.navy,
+          },
+          dan: {
+            background: 'transparent',
+            color: C.red,
+            border: '1.5px solid ' + C.red,
+          },
+          gh: { background: C.g100, color: C.g800, border: 'none' },
+        };
+        return React.createElement(
+          'button',
+          {
+            ...p,
+            style: {
+              padding: sm ? '5px 12px' : '9px 18px',
+              borderRadius: 8,
+              fontFamily: 'inherit',
+              fontWeight: 600,
+              fontSize: sm ? 12 : 14,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              transition: 'all .15s',
+              ...vs[v],
+              ...p.style,
+            },
+            onMouseEnter: (e) => (e.currentTarget.style.opacity = '.82'),
+            onMouseLeave: (e) => (e.currentTarget.style.opacity = '1'),
+          },
+          children
+        );
+      }
+
+      function Kpi({ label, valor, icon, cor, sub }) {
+        return React.createElement(
+          'div',
+          {
+            style: {
+              background: C.white,
+              borderRadius: 12,
+              padding: '16px 20px',
+              border: '1.5px solid ' + cor + '33',
+              boxShadow: '0 2px 8px rgba(15,36,69,.06)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 14,
+            },
+          },
+          React.createElement(
+            'div',
+            {
+              style: {
+                fontSize: 26,
+                background: cor + '18',
+                borderRadius: 10,
+                width: 48,
+                height: 48,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              },
+            },
+            icon
+          ),
+          React.createElement(
+            'div',
+            null,
+            React.createElement(
+              'div',
+              {
+                style: {
+                  fontSize: 11,
+                  color: C.g600,
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
+                  letterSpacing: 0.8,
+                },
+              },
+              label
+            ),
+            React.createElement(
+              'div',
+              {
+                style: {
+                  fontSize: 21,
+                  fontWeight: 700,
+                  color: cor,
+                  fontFamily: 'Georgia,serif',
+                },
+              },
+              valor
+            ),
+            sub &&
+              React.createElement(
+                'div',
+                { style: { fontSize: 11, color: C.g600, marginTop: 1 } },
+                sub
+              )
+          )
+        );
+      }
+
+      function Login({ onLogin, users }) {
+        const [u, setU] = useState('');
+        const [p, setP] = useState('');
+        const [e, setE] = useState('');
+        const [l, setL] = useState(false);
+        const go = () => {
+          setE('');
+          setL(true);
+          setTimeout(() => {
+            const usr = users[u.toLowerCase().trim()];
+            if (usr && usr.pass === p)
+              onLogin({
+                username: u.toLowerCase().trim(),
+                name: usr.name,
+                role: usr.role,
+              });
+            else setE('Usuário ou senha incorretos.');
+            setL(false);
+          }, 600);
+        };
+        return React.createElement(
+          'div',
+          {
+            style: {
+              minHeight: '100vh',
+              background:
+                'linear-gradient(135deg,' +
+                C.navy +
+                ' 0%,' +
+                C.navyL +
+                ' 60%,#2a4a80 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: 16,
+            },
+          },
+          React.createElement(
+            'div',
+            {
+              style: {
+                background: C.white,
+                borderRadius: 20,
+                padding: 40,
+                width: '100%',
+                maxWidth: 420,
+                boxShadow: '0 32px 80px rgba(0,0,0,.35)',
+                border: '2px solid ' + C.gold + '33',
+              },
+            },
+            React.createElement(
+              'div',
+              { style: { textAlign: 'center', marginBottom: 32 } },
+              React.createElement('div', {
+                style: { fontSize: 40, marginBottom: 8 },
+              }),
+              React.createElement('div', {
+                style: {
+                  fontFamily: 'Georgia,serif',
+                  fontWeight: 700,
+                  fontSize: 24,
+                  color: C.navy,
+                },
+              }),
+              React.createElement(
+                'div',
+                { style: { fontSize: 13, color: C.g600 } },
+                React.createElement(
+                  'div',
+                  {
+                    style: {
+                      textAlign: 'center',
+                      marginBottom: 24,
+                    },
+                  },
+
+                  
+
+                  React.createElement(
+                    'div',
+                    {
+                      style: {
+                        fontSize: 14,
+                        fontWeight: 700,
+                        color: C.g600,
+                      },
+                    },
+                    React.createElement('img', {
+  src:'https://responsible-salmon-dxb9c9qxnb.edgeone.app/5fe805d4-edb2-44b7-bef7-524ec197d387.png',
+  style: {
+    width: 180,
+    height: 'auto',
+    marginBottom: 12,
+    objectFit: 'contain',
+  },
+}),
+                    'Sistema de Gestão'
+                  )
+                )
+              )
+            ),
+            React.createElement(
+              'div',
+              { style: { display: 'flex', flexDirection: 'column', gap: 16 } },
+              React.createElement(Inp, {
+                label: 'Usuário',
+                value: u,
+                onChange: (ev) => setU(ev.target.value),
+                placeholder: 'Digite seu usuário',
+                onKeyDown: (ev) => ev.key === 'Enter' && go(),
+              }),
+              React.createElement(Inp, {
+                label: 'Senha',
+                type: 'password',
+                value: p,
+                onChange: (ev) => setP(ev.target.value),
+                placeholder: 'Digite sua senha',
+                onKeyDown: (ev) => ev.key === 'Enter' && go(),
+              }),
+              e &&
+                React.createElement(
+                  'div',
+                  {
+                    style: {
+                      background: C.redL,
+                      border: '1px solid ' + C.red + '44',
+                      borderRadius: 8,
+                      padding: '10px 14px',
+                      fontSize: 13,
+                      color: C.red,
+                      fontWeight: 600,
+                    },
+                  },
+                  '⚠️ ' + e
+                ),
+              React.createElement(
+                Btn,
+                {
+                  v: 'gold',
+                  onClick: go,
+                  style: {
+                    width: '100%',
+                    justifyContent: 'center',
+                    padding: '12px',
+                    fontSize: 15,
+                  },
+                },
+                l ? 'Entrando...' : '🔐 Entrar'
+              )
+            )
+          )
+        );
+      }
+
+      const VAZIO = {
+        id: '',
+        nome: '',
+        idade: '',
+        tel: '',
+        email: '',
+        cidade: '',
+        dataPed: hoje(),
+        prazo: '',
+        servico: SERVICOS[0],
+        valor: PRECOS[SERVICOS[0]],
+        desc: 0,
+        forma: 'Pix',
+        stPgto: 'Pendente',
+        stServ: 'Aguardando',
+        entregaReal: '',
+        obs: '',
+        indicado: '',
+        operador: '',
+      };
+
+      function FormPed({ ini, onSave, onCancel, user, saving }) {
+        const [f, setF] = useState(
+          ini || { ...VAZIO, id: gid(), operador: user?.name || '' }
+        );
+        const set = (k, v) => setF((p) => ({ ...p, [k]: v }));
+        const vf = Number(f.valor || 0) - Number(f.desc || 0);
+        return React.createElement(
+          'div',
+          {
+            onClick: (ev) => ev.target === ev.currentTarget && onCancel(),
+            style: {
+              position: 'fixed',
+              inset: 0,
+              zIndex: 1000,
+              background: 'rgba(15,36,69,.55)',
+              backdropFilter: 'blur(4px)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: 16,
+            },
+          },
+          React.createElement(
+            'div',
+            {
+              style: {
+                background: C.white,
+                borderRadius: 16,
+                width: '100%',
+                maxWidth: 640,
+                maxHeight: '92vh',
+                overflowY: 'auto',
+                boxShadow: '0 24px 60px rgba(15,36,69,.25)',
+              },
+            },
+            React.createElement(
+              'div',
+              {
+                style: {
+                  padding: '18px 24px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  background: C.navy,
+                  borderRadius: '14px 14px 0 0',
+                },
+              },
+              React.createElement(
+                'span',
+                {
+                  style: {
+                    fontWeight: 700,
+                    fontSize: 16,
+                    color: C.white,
+                    fontFamily: 'Georgia,serif',
+                  },
+                },
+                ini ? '✏️ Editar Pedido' : '➕ Novo Pedido'
+              ),
+              React.createElement(
+                'button',
+                {
+                  onClick: onCancel,
+                  style: {
+                    background: 'none',
+                    border: 'none',
+                    fontSize: 20,
+                    cursor: 'pointer',
+                    color: C.g400,
+                  },
+                },
+                '✕'
+              )
+            ),
+            React.createElement(
+              'div',
+              {
+                style: {
+                  padding: 24,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 16,
+                },
+              },
+              React.createElement(
+                'div',
+                { style: { background: C.g50, borderRadius: 10, padding: 16 } },
+                React.createElement(
+                  'div',
+                  {
+                    style: {
+                      fontWeight: 700,
+                      fontSize: 13,
+                      color: C.navy,
+                      marginBottom: 12,
+                      textTransform: 'uppercase',
+                    },
+                  },
+                  '👤 Cliente'
+                ),
+                React.createElement(
+                  'div',
+                  {
+                    style: {
+                      display: 'grid',
+                      gridTemplateColumns: '1fr 1fr',
+                      gap: 12,
+                    },
+                  },
+                  React.createElement(
+                    'div',
+                    { style: { gridColumn: '1/-1' } },
+                    React.createElement(Inp, {
+                      label: 'Nome *',
+                      value: f.nome,
+                      onChange: (ev) => set('nome', ev.target.value),
+                      placeholder: 'Nome completo',
+                    })
+                  ),
+                  React.createElement(Inp, {
+                    label: 'Telefone',
+                    value: f.tel,
+                    onChange: (ev) => set('tel', ev.target.value),
+                    placeholder: '(11) 99999-0000',
+                  }),
+                  React.createElement(Inp, {
+                    label: 'Cidade/UF',
+                    value: f.cidade,
+                    onChange: (ev) => set('cidade', ev.target.value),
+                    placeholder: 'São Paulo/SP',
+                  }),
+                  React.createElement(Inp, {
+                    label: 'E-mail',
+                    type: 'email',
+                    value: f.email,
+                    onChange: (ev) => set('email', ev.target.value),
+                    placeholder: 'email@email.com',
+                  }),
+                  React.createElement(Inp, {
+                    label: 'Idade',
+                    type: 'number',
+                    value: f.idade,
+                    onChange: (ev) => set('idade', ev.target.value),
+                    placeholder: '32',
+                  }),
+                  React.createElement(Inp, {
+                    label: 'Indicado por',
+                    value: f.indicado,
+                    onChange: (ev) => set('indicado', ev.target.value),
+                    placeholder: 'Instagram...',
+                  }),
+                  React.createElement(
+                    'div',
+                    { style: { gridColumn: '1/-1' } },
+                    React.createElement(Inp, {
+                      label: 'Operador',
+                      value: f.operador,
+                      onChange: (ev) => set('operador', ev.target.value),
+                    })
+                  )
+                )
+              ),
+              React.createElement(
+                'div',
+                { style: { background: C.g50, borderRadius: 10, padding: 16 } },
+                React.createElement(
+                  'div',
+                  {
+                    style: {
+                      fontWeight: 700,
+                      fontSize: 13,
+                      color: C.navy,
+                      marginBottom: 12,
+                      textTransform: 'uppercase',
+                    },
+                  },
+                  '📦 Serviço'
+                ),
+                React.createElement(
+                  'div',
+                  {
+                    style: {
+                      display: 'grid',
+                      gridTemplateColumns: '1fr 1fr',
+                      gap: 12,
+                    },
+                  },
+                  React.createElement(
+                    'div',
+                    { style: { gridColumn: '1/-1' } },
+                    React.createElement(Sel, {
+                      label: 'Serviço *',
+                      value: f.servico,
+                      onChange: (ev) => {
+                        set('servico', ev.target.value);
+                        set('valor', PRECOS[ev.target.value] || 0);
+                      },
+                      options: SERVICOS,
+                    })
+                  ),
+                  React.createElement(Inp, {
+                    label: 'Valor (R$)',
+                    type: 'number',
+                    value: f.valor,
+                    onChange: (ev) => set('valor', ev.target.value),
+                  }),
+                  React.createElement(Inp, {
+                    label: 'Desconto (R$)',
+                    type: 'number',
+                    value: f.desc,
+                    onChange: (ev) => set('desc', ev.target.value),
+                  }),
+                  React.createElement(
+                    'div',
+                    {
+                      style: {
+                        gridColumn: '1/-1',
+                        background: C.greenL,
+                        borderRadius: 8,
+                        padding: '10px 14px',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                      },
+                    },
+                    React.createElement(
+                      'span',
+                      {
+                        style: {
+                          fontSize: 13,
+                          color: C.green,
+                          fontWeight: 600,
+                        },
+                      },
+                      '💰 Valor Final'
+                    ),
+                    React.createElement(
+                      'span',
+                      {
+                        style: {
+                          fontSize: 18,
+                          fontWeight: 700,
+                          color: C.green,
+                        },
+                      },
+                      moeda(vf)
+                    )
+                  ),
+                  React.createElement(Sel, {
+                    label: 'Forma Pgto',
+                    value: f.forma,
+                    onChange: (ev) => set('forma', ev.target.value),
+                    options: FORMAS,
+                  }),
+                  React.createElement(Sel, {
+                    label: 'Status Pgto',
+                    value: f.stPgto,
+                    onChange: (ev) => set('stPgto', ev.target.value),
+                    options: S_PGTO.map((s) => ({
+                      v: s.l,
+                      t: s.i + ' ' + s.l,
+                    })),
+                  })
+                )
+              ),
+              React.createElement(
+                'div',
+                { style: { background: C.g50, borderRadius: 10, padding: 16 } },
+                React.createElement(
+                  'div',
+                  {
+                    style: {
+                      fontWeight: 700,
+                      fontSize: 13,
+                      color: C.navy,
+                      marginBottom: 12,
+                      textTransform: 'uppercase',
+                    },
+                  },
+                  '📅 Datas e Status'
+                ),
+                React.createElement(
+                  'div',
+                  {
+                    style: {
+                      display: 'grid',
+                      gridTemplateColumns: '1fr 1fr',
+                      gap: 12,
+                    },
+                  },
+                  React.createElement(Inp, {
+                    label: 'Data Pedido',
+                    type: 'date',
+                    value: f.dataPed,
+                    onChange: (ev) => set('dataPed', ev.target.value),
+                  }),
+                  React.createElement(Inp, {
+                    label: 'Prazo',
+                    type: 'date',
+                    value: f.prazo,
+                    onChange: (ev) => set('prazo', ev.target.value),
+                  }),
+                  React.createElement(Sel, {
+                    label: 'Status Serviço',
+                    value: f.stServ,
+                    onChange: (ev) => set('stServ', ev.target.value),
+                    options: S_SERV.map((s) => ({
+                      v: s.l,
+                      t: s.i + ' ' + s.l,
+                    })),
+                  }),
+                  React.createElement(Inp, {
+                    label: 'Entrega Real',
+                    type: 'date',
+                    value: f.entregaReal,
+                    onChange: (ev) => set('entregaReal', ev.target.value),
+                  }),
+                  React.createElement(
+                    'div',
+                    { style: { gridColumn: '1/-1' } },
+                    React.createElement(
+                      'label',
+                      {
+                        style: {
+                          fontSize: 12,
+                          fontWeight: 600,
+                          color: C.g600,
+                          textTransform: 'uppercase',
+                        },
+                      },
+                      'Observações'
+                    ),
+                    React.createElement('textarea', {
+                      value: f.obs,
+                      onChange: (ev) => set('obs', ev.target.value),
+                      style: {
+                        width: '100%',
+                        marginTop: 4,
+                        padding: '9px 12px',
+                        borderRadius: 8,
+                        border: '1.5px solid ' + C.g200,
+                        fontSize: 14,
+                        fontFamily: 'inherit',
+                        resize: 'vertical',
+                        minHeight: 70,
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                      },
+                      onFocus: fo,
+                      onBlur: bl,
+                    })
+                  )
+                )
+              ),
+              React.createElement(
+                'div',
+                {
+                  style: {
+                    display: 'flex',
+                    gap: 10,
+                    justifyContent: 'flex-end',
+                  },
+                },
+                React.createElement(
+                  Btn,
+                  { v: 'gh', onClick: onCancel },
+                  'Cancelar'
+                ),
+                React.createElement(
+                  Btn,
+                  {
+                    v: 'gold',
+                    onClick: () => {
+                      if (!f.nome.trim())
+                        return alert('Informe o nome do cliente.');
+                      onSave({
+                        ...f,
+                        valor: Number(f.valor),
+                        desc: Number(f.desc),
+                      });
+                    },
+                  },
+                  saving ? 'Salvando...' : '💾 Salvar'
+                )
+              )
+            )
+          )
+        );
+      }
+
+      function Card({ p, onEdit, onDel, isAdmin }) {
+        const vf = p.valor - (p.desc || 0);
+        const atras =
+          p.prazo &&
+          p.prazo < hoje() &&
+          p.stServ !== 'Concluído' &&
+          p.stServ !== 'Cancelado';
+        return React.createElement(
+          'div',
+          {
+            style: {
+              background: C.white,
+              borderRadius: 12,
+              border: '1.5px solid ' + (atras ? C.red : C.g200),
+              overflow: 'hidden',
+              boxShadow: '0 2px 8px rgba(15,36,69,.07)',
+            },
+          },
+          React.createElement(
+            'div',
+            {
+              style: {
+                background: C.navy,
+                padding: '12px 16px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+              },
+            },
+            React.createElement(
+              'div',
+              null,
+              React.createElement(
+                'div',
+                {
+                  style: {
+                    fontSize: 11,
+                    color: C.gold,
+                    fontWeight: 600,
+                    letterSpacing: 1,
+                  },
+                },
+                p.id
+              ),
+              React.createElement(
+                'div',
+                {
+                  style: {
+                    fontWeight: 700,
+                    fontSize: 15,
+                    color: C.white,
+                    fontFamily: 'Georgia,serif',
+                  },
+                },
+                p.nome
+              )
+            ),
+            isAdmin &&
+              React.createElement(
+                'div',
+                { style: { textAlign: 'right' } },
+                React.createElement(
+                  'div',
+                  { style: { fontSize: 18, fontWeight: 700, color: C.goldL } },
+                  moeda(vf)
+                ),
+                p.desc > 0 &&
+                  React.createElement(
+                    'div',
+                    {
+                      style: {
+                        fontSize: 11,
+                        color: C.g400,
+                        textDecoration: 'line-through',
+                      },
+                    },
+                    moeda(p.valor)
+                  )
+              )
+          ),
+          React.createElement(
+            'div',
+            { style: { padding: '12px 16px' } },
+            React.createElement(
+              'div',
+              {
+                style: {
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: C.navy,
+                  marginBottom: 10,
+                },
+              },
+              '📦 ' + p.servico
+            ),
+            React.createElement(
+              'div',
+              {
+                style: {
+                  display: 'flex',
+                  gap: 6,
+                  flexWrap: 'wrap',
+                  marginBottom: 10,
+                },
+              },
+              React.createElement(Badge, { status: p.stServ, tipo: 'serv' }),
+              isAdmin &&
+                React.createElement(Badge, { status: p.stPgto, tipo: 'pgto' }),
+              atras &&
+                React.createElement(
+                  'span',
+                  {
+                    style: {
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      padding: '3px 10px',
+                      borderRadius: 20,
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: C.red,
+                      background: C.redL,
+                      border: '1px solid ' + C.red + '33',
+                    },
+                  },
+                  '🚨 Atrasado'
+                )
+            ),
+            React.createElement(
+              'div',
+              {
+                style: {
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: 6,
+                  fontSize: 12,
+                  color: C.g600,
+                },
+              },
+              p.tel && React.createElement('span', null, '📱 ' + p.tel),
+              p.cidade && React.createElement('span', null, '📍 ' + p.cidade),
+              React.createElement('span', null, '📅 ' + fdata(p.dataPed)),
+              p.prazo &&
+                React.createElement('span', null, '🎯 ' + fdata(p.prazo)),
+              p.operador &&
+                React.createElement(
+                  'span',
+                  { style: { gridColumn: '1/-1' } },
+                  '👤 ' + p.operador
+                )
+            ),
+            p.obs &&
+              React.createElement(
+                'div',
+                {
+                  style: {
+                    marginTop: 8,
+                    padding: '6px 10px',
+                    background: C.g50,
+                    borderRadius: 6,
+                    fontSize: 12,
+                    color: C.g600,
+                    borderLeft: '3px solid ' + C.gold,
+                  },
+                },
+                p.obs
+              )
+          ),
+          React.createElement(
+            'div',
+            {
+              style: {
+                padding: '10px 16px',
+                borderTop: '1px solid ' + C.g100,
+                display: 'flex',
+                gap: 8,
+                justifyContent: 'flex-end',
+              },
+            },
+            React.createElement(
+              Btn,
+              { sm: true, v: 'out', onClick: () => onEdit(p) },
+              '✏️ Editar'
+            ),
+            isAdmin &&
+              React.createElement(
+                Btn,
+                { sm: true, v: 'dan', onClick: () => onDel(p) },
+                '🗑️'
+              )
+          )
+        );
+      }
+
+      function App() {
+        const [session, setSession] = useState(null);
+        const [users, setUsers] = useState(USERS);
+        const [peds, setPeds] = useState([]);
+        const [load, setLoad] = useState(true);
+        const [aba, setAba] = useState('pedidos');
+        const [busca, setBusca] = useState('');
+        const [fSt, setFSt] = useState('Todos');
+        const [modalNovo, setModalNovo] = useState(false);
+        const [editando, setEditando] = useState(null);
+        const [saving, setSaving] = useState(false);
+
+        useEffect(() => {
+          const init = async () => {
+            try {
+              const ps = await fbLoad();
+              setPeds(ps);
+            } catch (e) {
+              console.error(e);
+            }
+            try {
+              const s = localStorage.getItem('rbe-session');
+              if (s) setSession(JSON.parse(s));
+            } catch {}
+            setLoad(false);
+          };
+          if (window._firebaseReady) init();
+          else window.addEventListener('firebaseReady', init, { once: true });
+        }, []);
+
+        const isAdmin = session?.role === 'admin';
+
+        const login = (s) => {
+          setSession(s);
+          try {
+            localStorage.setItem('rbe-session', JSON.stringify(s));
+          } catch {}
+        };
+        const logout = () => {
+          setSession(null);
+          try {
+            localStorage.removeItem('rbe-session');
+          } catch {}
+        };
+
+        const salvar = async (p) => {
+          setSaving(true);
+          try {
+            const saved = await fbSave(p);
+            setPeds((prev) => {
+              const ex = prev.find((x) => x.id === p.id);
+              return ex
+                ? prev.map((x) => (x.id === p.id ? saved : x))
+                : [...prev, saved];
+            });
+            setModalNovo(false);
+            setEditando(null);
+          } catch (e) {
+            alert('Erro ao salvar: ' + e.message);
+          }
+          setSaving(false);
+        };
+
+        const excluir = async (p) => {
+          if (!window.confirm('Excluir este pedido?')) return;
+          if (p._fbId) await fbDel(p._fbId).catch(console.error);
+          setPeds((prev) => prev.filter((x) => x.id !== p.id));
+        };
+
+        if (load)
+          return React.createElement(
+            'div',
+            {
+              style: {
+                height: '100vh',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontFamily: 'Georgia,serif',
+                fontSize: 18,
+                color: C.navy,
+              },
+            },
+            '🔥 Conectando ao Firebase...'
+          );
+        if (!session)
+          return React.createElement(Login, { onLogin: login, users });
+
+        const filtrados = peds.filter((p) => {
+          const mb =
+            !busca ||
+            p.nome.toLowerCase().includes(busca.toLowerCase()) ||
+            p.id.includes(busca);
+          const ms = fSt === 'Todos' || p.stServ === fSt;
+          return mb && ms;
+        });
+        const pedidosComAviso = peds.filter((p) => {
+          return p.stServ !== 'Concluído';
+          const dataBase = p.data || p.dataEntrada || p.createdAt;
+
+          if (!dataBase) return false;
+
+          const prazoFinal = adicionarDiasUteis(dataBase, 7);
+          const restantes = diasUteisRestantes(prazoFinal);
+
+          return restantes <= 7 && restantes >= 0 && p.status !== 'Concluído';
+        });
+
+        const totalPago = peds
+
+          .filter((p) => p.stPgto === 'Pago')
+          .reduce((s, p) => s + (p.valor - (p.desc || 0)), 0);
+        const totalPend = peds
+          .filter((p) => p.stPgto === 'Pendente')
+          .reduce((s, p) => s + (p.valor - (p.desc || 0)), 0);
+        const concl = peds.filter((p) => p.stServ === 'Concluído').length;
+        const andam = peds.filter((p) => p.stServ === 'Em Andamento').length;
+        const atras = peds.filter(
+          (p) =>
+            p.prazo &&
+            p.prazo < hoje() &&
+            p.stServ !== 'Concluído' &&
+            p.stServ !== 'Cancelado'
+        ).length;
+
+        const ABAS = isAdmin
+          ? [
+              { id: 'pedidos', label: '📋 Pedidos' },
+              { id: 'dashboard', label: '📊 Dashboard' },
+              { id: 'faturamento', label: '💰 Faturamento' },
+            ]
+          : [
+              { id: 'pedidos', label: '📋 Pedidos' },
+              { id: 'dashboard', label: '📊 Dashboard' },
+            ];
+
+        return React.createElement(
+          'div',
+          { style: { minHeight: '100vh', background: C.cream } },
+          React.createElement(
+            'div',
+            {
+              style: {
+                background: C.navy,
+                padding: '0 24px',
+                boxShadow: '0 2px 16px rgba(15,36,69,.3)',
+              },
+            },
+            React.createElement(
+              'div',
+              {
+                style: {
+                  maxWidth: 1140,
+                  margin: '0 auto',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  height: 70,
+                },
+              },
+              React.createElement(
+                'div',
+                {
+                  style: {
+                    fontFamily: 'Georgia,serif',
+                    fontWeight: 700,
+                    fontSize: 20,
+                    color: C.gold,
+                  },
+                },
+                React.createElement('img', {
+                  src: 'https://responsible-salmon-dxb9c9qxnb.edgeone.app/5fe805d4-edb2-44b7-bef7-524ec197d387.png',
+                  style: {
+                    width: 60,
+                    maxWidth: '100%',
+                    height: 'auto',
+                    objectFit: 'contain',
+                    display: 'block',
+                    margin: '0 auto 10px auto',
+                  },
+                })
+              ),
+              React.createElement(
+                'div',
+                { style: { display: 'flex', gap: 4 } },
+                ABAS.map((t) =>
+                  React.createElement(
+                    'button',
+                    {
+                      key: t.id,
+                      onClick: () => setAba(t.id),
+                      style: {
+                        padding: '8px 16px',
+                        borderRadius: 8,
+                        border: 'none',
+                        cursor: 'pointer',
+                        background: aba === t.id ? C.gold : 'transparent',
+                        color: aba === t.id ? C.navy : C.g400,
+                        fontWeight: 600,
+                        fontSize: 13,
+                        fontFamily: 'inherit',
+                      },
+                    },
+                    t.label
+                  )
+                )
+              ),
+              React.createElement(
+                'div',
+                { style: { display: 'flex', alignItems: 'center', gap: 12 } },
+                React.createElement(
+                  'div',
+                  { style: { textAlign: 'right' } },
+                  React.createElement(
+                    'div',
+                    {
+                      style: { fontSize: 13, fontWeight: 600, color: C.white },
+                    },
+                    session.name
+                  ),
+                  React.createElement(
+                    'div',
+                    { style: { fontSize: 11, color: C.g400 } },
+                    isAdmin ? '👑 Admin' : '👤 Operador'
+                  )
+                ),
+                aba === 'pedidos' &&
+                  React.createElement(
+                    Btn,
+                    { v: 'gold', onClick: () => setModalNovo(true) },
+                    '+ Novo'
+                  ),
+                React.createElement(
+                  Btn,
+                  {
+                    v: 'gh',
+                    sm: true,
+                    onClick: logout,
+                    style: {
+                      color: C.g400,
+                      background: 'transparent',
+                      border: '1px solid ' + C.g600,
+                    },
+                  },
+                  'Sair'
+                )
+              )
+            )
+          ),
+          React.createElement(
+            'div',
+            { style: { maxWidth: 1140, margin: '0 auto', padding: 24 } },
+            React.createElement(
+              'div',
+              {
+                style: {
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit,minmax(160px,1fr))',
+                  gap: 14,
+                  marginBottom: 24,
+                },
+              },
+              isAdmin &&
+                React.createElement(Kpi, {
+                  label: 'Faturado (Pago)',
+                  valor: moeda(totalPago),
+                  icon: '💰',
+                  cor: C.green,
+                }),
+              isAdmin &&
+                React.createElement(Kpi, {
+                  label: 'A Receber',
+                  valor: moeda(totalPend),
+                  icon: '⏳',
+                  cor: C.yellow,
+                }),
+              React.createElement(Kpi, {
+                label: 'Total Pedidos',
+                valor: peds.length,
+                icon: '📦',
+                cor: C.navy,
+              }),
+              React.createElement(Kpi, {
+                label: 'Em Andamento',
+                valor: andam,
+                icon: '🔄',
+                cor: C.blue,
+              }),
+              React.createElement(Kpi, {
+                label: 'Concluídos',
+                valor: concl,
+                icon: '✅',
+                cor: C.green,
+              }),
+              atras > 0 &&
+                React.createElement(Kpi, {
+                  label: 'Atrasados',
+                  valor: atras,
+                  icon: '🚨',
+                  cor: C.red,
+                })
+            ),
+            aba === 'pedidos' &&
+              React.createElement(
+                'div',
+                null,
+                React.createElement(
+                  'div',
+                  {
+                    style: {
+                      background: C.white,
+                      borderRadius: 12,
+                      padding: '14px 18px',
+                      marginBottom: 20,
+                      display: 'flex',
+                      gap: 12,
+                      alignItems: 'center',
+                      flexWrap: 'wrap',
+                      border: '1px solid ' + C.g200,
+                    },
+                  },
+                  React.createElement(
+                    'div',
+                    {
+                      style: {
+                        background: '#fff3cd',
+                        border: '1px solid #ffe69c',
+                        borderRadius: 12,
+                        padding: 16,
+                        marginBottom: 20,
+                        width: '100%',
+                      },
+                    },
+
+                    React.createElement(
+                      'div',
+                      {
+                        style: {
+                          fontWeight: 700,
+                          fontSize: 18,
+                          marginBottom: 12,
+                          color: '#856404',
+                        },
+                      },
+                      '⚠️ Avisos de Prazo'
+                    ),
+
+                    pedidosComAviso.length === 0
+                      ? React.createElement(
+                          'div',
+                          { style: { color: '#856404' } },
+                          'Nenhum prazo próximo do vencimento'
+                        )
+                      : pedidosComAviso.map((p) =>
+                          React.createElement(
+                            'div',
+                            {
+                              key: p.id,
+                              style: {
+                                background: '#fff',
+                                padding: 12,
+                                borderRadius: 10,
+                                marginBottom: 10,
+                              },
+                            },
+                            React.createElement(
+                              'div',
+                              { style: { fontWeight: 700 } },
+                              p.nome
+                            ),
+                            React.createElement('div', {}, p.servico),
+                            React.createElement(
+                              'div',
+                              { style: { color: '#b26a00', marginTop: 4 } },
+                              'Prazo perto do vencimento'
+                            )
+                          )
+                        )
+                  ),
+                  React.createElement('input', {
+                    value: busca,
+                    onChange: (e) => setBusca(e.target.value),
+                    placeholder: '🔍 Buscar nome, ID...',
+                    style: {
+                      flex: 1,
+                      minWidth: 200,
+                      padding: '8px 12px',
+                      borderRadius: 8,
+                      border: '1.5px solid ' + C.g200,
+                      fontSize: 14,
+                      fontFamily: 'inherit',
+                      outline: 'none',
+                    },
+                    onFocus: fo,
+                    onBlur: bl,
+                  }),
+                  React.createElement(Sel, {
+                    value: fSt,
+                    onChange: (e) => setFSt(e.target.value),
+                    options: ['Todos', ...S_SERV.map((s) => s.l)].map((s) => ({
+                      v: s,
+                      t: s,
+                    })),
+                  }),
+                  React.createElement(
+                    'span',
+                    { style: { fontSize: 13, color: C.g600 } },
+                    filtrados.length + ' pedido(s)'
+                  )
+                ),
+                filtrados.length === 0
+                  ? React.createElement(
+                      'div',
+                      {
+                        style: {
+                          textAlign: 'center',
+                          padding: '60px 20px',
+                          color: C.g400,
+                        },
+                      },
+                      React.createElement(
+                        'div',
+                        { style: { fontSize: 48, marginBottom: 12 } },
+                        peds.length === 0 ? '📋' : '🔍'
+                      ),
+                      React.createElement(
+                        'div',
+                        {
+                          style: {
+                            fontSize: 18,
+                            fontFamily: 'Georgia,serif',
+                            color: C.navy,
+                          },
+                        },
+                        peds.length === 0
+                          ? 'Nenhum pedido ainda'
+                          : 'Nenhum resultado'
+                      ),
+                      peds.length === 0 &&
+                        React.createElement(
+                          Btn,
+                          {
+                            v: 'gold',
+                            style: { marginTop: 16 },
+                            onClick: () => setModalNovo(true),
+                          },
+                          '+ Cadastrar Primeiro Pedido'
+                        )
+                    )
+                  : React.createElement(
+                      'div',
+                      {
+                        style: {
+                          display: 'grid',
+                          gridTemplateColumns:
+                            'repeat(auto-fill,minmax(320px,1fr))',
+                          gap: 16,
+                        },
+                      },
+                      filtrados.map((p) =>
+                        React.createElement(Card, {
+                          key: p.id,
+                          p,
+                          onEdit: setEditando,
+                          onDel: excluir,
+                          isAdmin,
+                        })
+                      )
+                    )
+              ),
+            aba === 'dashboard' &&
+              React.createElement(
+                'div',
+                {
+                  style: {
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr',
+                    gap: 20,
+                  },
+                },
+                React.createElement(
+                  'div',
+                  {
+                    style: {
+                      background: C.white,
+                      borderRadius: 12,
+                      padding: 20,
+                      border: '1px solid ' + C.g200,
+                    },
+                  },
+                  React.createElement(
+                    'div',
+                    {
+                      style: {
+                        fontFamily: 'Georgia,serif',
+                        fontWeight: 700,
+                        fontSize: 16,
+                        color: C.navy,
+                        marginBottom: 16,
+                      },
+                    },
+                    '🔄 Status dos Serviços'
+                  ),
+                  S_SERV.map((s) => {
+                    const q = peds.filter((p) => p.stServ === s.l).length;
+                    const pc = peds.length
+                      ? Math.round((q / peds.length) * 100)
+                      : 0;
+                    return React.createElement(
+                      'div',
+                      { key: s.l, style: { marginBottom: 10 } },
+                      React.createElement(
+                        'div',
+                        {
+                          style: {
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            marginBottom: 4,
+                          },
+                        },
+                        React.createElement(
+                          'span',
+                          { style: { fontSize: 13 } },
+                          s.i + ' ' + s.l
+                        ),
+                        React.createElement(
+                          'span',
+                          { style: { fontSize: 13, fontWeight: 600 } },
+                          q + ' (' + pc + '%)'
+                        )
+                      ),
+                      React.createElement(
+                        'div',
+                        {
+                          style: {
+                            height: 8,
+                            background: C.g100,
+                            borderRadius: 8,
+                            overflow: 'hidden',
+                          },
+                        },
+                        React.createElement('div', {
+                          style: {
+                            height: '100%',
+                            width: pc + '%',
+                            background: s.c,
+                            borderRadius: 8,
+                          },
+                        })
+                      )
+                    );
+                  })
+                ),
+                isAdmin &&
+                  React.createElement(
+                    'div',
+                    {
+                      style: {
+                        background: C.white,
+                        borderRadius: 12,
+                        padding: 20,
+                        border: '1px solid ' + C.g200,
+                      },
+                    },
+                    React.createElement(
+                      'div',
+                      {
+                        style: {
+                          fontFamily: 'Georgia,serif',
+                          fontWeight: 700,
+                          fontSize: 16,
+                          color: C.navy,
+                          marginBottom: 16,
+                        },
+                      },
+                      '💳 Pagamentos'
+                    ),
+                    S_PGTO.map((s) => {
+                      const tot = peds
+                        .filter((p) => p.stPgto === s.l)
+                        .reduce((a, p) => a + (p.valor - (p.desc || 0)), 0);
+                      const q = peds.filter((p) => p.stPgto === s.l).length;
+                      return React.createElement(
+                        'div',
+                        {
+                          key: s.l,
+                          style: {
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            padding: '10px 12px',
+                            marginBottom: 8,
+                            background: s.bg,
+                            borderRadius: 8,
+                            border: '1px solid ' + s.c + '33',
+                          },
+                        },
+                        React.createElement(
+                          'span',
+                          {
+                            style: {
+                              fontSize: 13,
+                              fontWeight: 600,
+                              color: s.c,
+                            },
+                          },
+                          s.i + ' ' + s.l
+                        ),
+                        React.createElement(
+                          'div',
+                          { style: { textAlign: 'right' } },
+                          React.createElement(
+                            'div',
+                            {
+                              style: {
+                                fontSize: 15,
+                                fontWeight: 700,
+                                color: s.c,
+                              },
+                            },
+                            moeda(tot)
+                          ),
+                          React.createElement(
+                            'div',
+                            { style: { fontSize: 11, color: C.g600 } },
+                            q + ' pedido(s)'
+                          )
+                        )
+                      );
+                    })
+                  )
+              ),
+            aba === 'faturamento' &&
+              isAdmin &&
+              React.createElement(Faturamento, { peds })
+          ),
+          (modalNovo || editando) &&
+            React.createElement(FormPed, {
+              ini: editando,
+              onSave: salvar,
+              onCancel: () => {
+                setModalNovo(false);
+                setEditando(null);
+              },
+              user: session,
+              saving,
+            })
+        );
+      }
+
+      function Faturamento({ peds }) {
+        const ano = new Date().getFullYear();
+        const [anoSel, setAnoSel] = useState(String(ano));
+        const anos = [
+          ...new Set(
+            peds
+              .map((p) => (p.dataPed ? p.dataPed.slice(0, 4) : null))
+              .filter(Boolean)
+          ),
+        ]
+          .sort()
+          .reverse();
+        if (!anos.includes(String(ano))) anos.unshift(String(ano));
+        const dados = MESES.map((nome, i) => {
+          const mes = String(i + 1).padStart(2, '0');
+          const chave = anoSel + '-' + mes;
+          const pm = peds.filter(
+            (p) => p.dataPed && p.dataPed.startsWith(chave)
+          );
+          const pagos = pm
+            .filter((p) => p.stPgto === 'Pago')
+            .reduce((s, p) => s + (p.valor - (p.desc || 0)), 0);
+          const pend = pm
+            .filter((p) => p.stPgto === 'Pendente')
+            .reduce((s, p) => s + (p.valor - (p.desc || 0)), 0);
+          return { nome, pagos, pend, total: pagos + pend, q: pm.length };
+        });
+        const totalAno = dados.reduce((s, d) => s + d.pagos, 0);
+        const totalPedidos = peds.length;
+        const totalPendente = dados.reduce((s, d) => s + d.pend, 0);
+        const rankingServicos = {};
+
+        const topServicos = Object.entries(rankingServicos)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 5);
+        const rankingOps = {};
+
+        peds.forEach((p) => {
+          if (p.stPgto !== 'Pago') return;
+
+          const op = p.operador || 'Sem operador';
+
+          rankingOps[op] = (rankingOps[op] || 0) + Number(p.valor || 0);
+        });
+
+        const topOps = Object.entries(rankingOps).sort((a, b) => b[1] - a[1]);
+        const metaMensal = 5000;
+
+        const faturadoMesAtual = dados[new Date().getMonth()]?.pagos || 0;
+
+        const percentualMeta = (faturadoMesAtual / metaMensal) * 100;
+
+        const ticketMedio = totalPedidos > 0 ? totalAno / totalPedidos : 0;
+
+        peds.forEach((p) => {
+          if (p.stPgto !== 'Pago') return;
+
+          const valor = Number(p.valorFinal || p.valor || 0);
+
+          if (!p.data) return;
+
+          const partes = p.data.split('/');
+
+          const mes = Number(partes[1]) - 1;
+
+          if (mes >= 0) {
+            faturamentoMensal[mes] += valor;
+            dados.map((d) =>
+              React.createElement(
+                'div',
+                {
+                  style: {
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    padding: '12px 0',
+                    borderBottom: '1px solid #E9ECEF',
+                    fontSize: 15,
+                  },
+                },
+
+                React.createElement('strong', {}, d.nome),
+
+                React.createElement(
+                  'span',
+                  {
+                    style: {
+                      color: '#0F2445',
+                      fontWeight: 700,
+                    },
+                  },
+                  moeda(d.pagos)
+                )
+              )
+            );
+          }
+        });
+        const maxMes = Math.max(...dados.map((d) => d.total), 1);
+        return React.createElement(
+          'div',
+          { style: { display: 'flex', flexDirection: 'column', gap: 20 } },
+          React.createElement(
+            'div',
+            {
+              style: {
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))',
+                gap: 14,
+              },
+            },
+            React.createElement(Kpi, {
+              label: 'Faturado ' + anoSel,
+              valor: moeda(totalAno),
+              icon: '💰',
+              cor: C.green,
+            }),
+            React.createElement(Kpi, {
+              label: 'Pedidos no Ano',
+              valor: dados.reduce((s, d) => s + d.q, 0),
+              icon: '📦',
+              cor: C.navy,
+            })
+          ),
+          React.createElement(
+            'div',
+            { style: { display: 'flex', gap: 6 } },
+            anos.map((a) =>
+              React.createElement(
+                'button',
+                {
+                  key: a,
+                  onClick: () => setAnoSel(a),
+                  style: {
+                    padding: '6px 16px',
+                    borderRadius: 20,
+                    border: '1.5px solid ' + (anoSel === a ? C.navy : C.g200),
+                    background: anoSel === a ? C.navy : C.white,
+                    color: anoSel === a ? C.white : C.g600,
+                    fontWeight: 600,
+                    fontSize: 13,
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                  },
+                },
+                a
+              )
+            )
+          ),
+          React.createElement(
+            'div',
+            {
+              style: {
+                background: C.white,
+                borderRadius: 14,
+                padding: 24,
+                border: '1px solid ' + C.g200,
+              },
+            },
+            React.createElement(
+              'div',
+              {
+                style: {
+                  fontFamily: 'Georgia,serif',
+                  fontWeight: 700,
+                  fontSize: 16,
+                  color: C.navy,
+                  marginBottom: 20,
+                },
+              },
+              '📊 Faturamento — ' + anoSel
+              
+            ),
+            React.createElement(
+              'div',
+              {
+                style: {
+                  display: 'flex',
+                  alignItems: 'flex-end',
+                  gap: 6,
+                  height: 160,
+                  marginBottom: 8,
+                },
+              },
+              dados.map((d, i) => {
+                const hP = maxMes > 0 ? (d.pagos / maxMes) * 140 : 0;
+                const hPe = maxMes > 0 ? (d.pend / maxMes) * 140 : 0;
+                const isA =
+                  i === new Date().getMonth() && anoSel === String(ano);
+                return React.createElement(
+                  'div',
+                  {
+                    key: i,
+                    style: {
+                      flex: 1,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: 2,
+                    },
+                  },
+                  React.createElement(
+                    'div',
+                    {
+                      style: {
+                        width: '100%',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'flex-end',
+                        height: 140,
+                      },
+                    },
+                    d.pend > 0 &&
+                      React.createElement('div', {
+                        style: {
+                          width: '100%',
+                          height: hPe,
+                          background: C.yellowL,
+                          borderRadius: '3px 3px 0 0',
+                        },
+                      }),
+                    d.pagos > 0 &&
+                      React.createElement('div', {
+                        style: {
+                          width: '100%',
+                          height: hP,
+                          background: isA ? C.gold : C.navy,
+                          borderRadius: d.pend > 0 ? '0' : '3px 3px 0 0',
+                        },
+                      }),
+                    d.total === 0 &&
+                      React.createElement('div', {
+                        style: {
+                          width: '100%',
+                          height: 4,
+                          background: C.g200,
+                          borderRadius: 3,
+                        },
+                      })
+                  ),
+                  React.createElement(
+                    'span',
+                    {
+                      style: {
+                        fontSize: 10,
+                        color: isA ? C.navy : C.g400,
+                        fontWeight: isA ? 700 : 400,
+                      },
+                    },
+                    d.nome
+                  )
+                );
+              })
+            )
+          )
+        );
+      }
+      
+
+      ReactDOM.createRoot(document.getElementById('root')).render(
+        React.createElement(App)
+      );
+    </script>
+  </body>
+</html>
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+
+  import {
+    getFirestore,
+    collection,
+    addDoc,
+    getDocs,
+  } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+  const firebaseConfig = {
+    apiKey: 'AIzaSyC6JAbJTc-HWrDBKTgPRitx4xFK29-1H10',
+    authDomain: 'rbecarreira.firebaseapp.com',
+    projectId: 'rbecarreira',
+    storageBucket: 'rbecarreira.firebasestorage.app',
+    messagingSenderId: '390907131123',
+    appId: '1:390907131123:web:3b5c96af40ca778f893386',
+    measurementId: 'G-VREB5JQML8',
+  };
+
+  const app = initializeApp(firebaseConfig);
+
+  const db = getFirestore(app);
+
+  window.db = db;
+  window.collection = collection;
+  window.addDoc = addDoc;
+  window.getDocs = getDocs;
+
+  console.log('Firebase conectado!');
+</script>
