@@ -859,8 +859,7 @@ function App(){
       </div>
       <div style={{maxWidth:1140,margin:"0 auto",padding:24}}>
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(155px,1fr))",gap:14,marginBottom:24}}>
-          {isAdmin&&<Kpi label="Faturado (Pago)" valor={moeda(totalPago)} icon="💰" cor={C.green}/>}
-          {isAdmin&&<Kpi label="A Receber" valor={moeda(totalPend)} icon="⏳" cor={C.yellow}/>}
+ 
           <Kpi label="Total Pedidos" valor={peds.length} icon="📦" cor={C.navy}/>
           <Kpi label="Em Andamento" valor={andam} icon="🔄" cor={C.blue}/>
           <Kpi label="Concluídos" valor={concl} icon="✅" cor={C.green}/>
