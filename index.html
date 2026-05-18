@@ -78,6 +78,66 @@ const moeda = v => "R$ " + Number(v||0).toFixed(2).replace(".",",").replace(/\B(
 const fdata = d => d ? new Date(d+"T12:00:00").toLocaleDateString("pt-BR") : "—";
 const uid = () => "PED"+Date.now().toString().slice(-6);
 const diasPara = d => Math.ceil((new Date(d+"T23:59:59") - new Date()) / 86400000);
+ 
+const addDiasUteis = (dataStr, dias) => {
+  const d = new Date(dataStr+"T12:00:00");
+  let count = 0;
+  while(count < dias){
+    d.setDate(d.getDate()+1);
+    const dow = d.getDay();
+    if(dow !== 0 && dow !== 6) count++;
+  }
+  return d.toISOString().split("T")[0];
+};
+ 
+const exportarCSV = (peds) => {
+  const headers = ["ID","Nome","Idade","Telefone","Email","Cidade","Servico","Valor","Desconto","Valor Final","Forma Pagamento","Status Pagamento","Status Servico","Data Pedido","Prazo","Entrega Real","Operador","Indicado por","Observacoes"];
+  const rows = peds.map(p => [
+    p.id, p.nome, p.idade||"", p.tel||"", p.email||"", p.cidade||"",
+    p.servico, p.valor||0, p.desc||0, (p.valor||0)-(p.desc||0),
+    p.forma||"", p.stPgto||"", p.stServ||"",
+    p.dataPed||"", p.prazo||"", p.entregaReal||"",
+    p.operador||"", p.indicado||"", (p.obs||"").replace(/,/g,";")
+  ]);
+  const csv = [headers,...rows].map(r=>r.join(",")).join("\n");
+  const blob = new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8;"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "rbe-pedidos-"+new Date().toISOString().slice(0,10)+".csv";
+  a.click();
+  URL.revokeObjectURL(url);
+};
+ 
+const addDiasUteis = (dataStr, dias) => {
+  const d = new Date(dataStr+"T12:00:00");
+  let count = 0;
+  while(count < dias){
+    d.setDate(d.getDate()+1);
+    const dow = d.getDay();
+    if(dow !== 0 && dow !== 6) count++;
+  }
+  return d.toISOString().split("T")[0];
+};
+ 
+const exportarCSV = (peds) => {
+  const headers = ["ID","Nome","Idade","Telefone","Email","Cidade","Servico","Valor","Desconto","Valor Final","Forma Pagamento","Status Pagamento","Status Servico","Data Pedido","Prazo","Entrega Real","Operador","Indicado por","Observacoes"];
+  const rows = peds.map(p => [
+    p.id, p.nome, p.idade||"", p.tel||"", p.email||"", p.cidade||"",
+    p.servico, p.valor||0, p.desc||0, (p.valor||0)-(p.desc||0),
+    p.forma||"", p.stPgto||"", p.stServ||"",
+    p.dataPed||"", p.prazo||"", p.entregaReal||"",
+    p.operador||"", p.indicado||"", (p.obs||"").replace(/,/g,";")
+  ]);
+  const csv = [headers,...rows].map(r=>r.join(",")).join("\n");
+  const blob = new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8;"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "rbe-pedidos-"+new Date().toISOString().slice(0,10)+".csv";
+  a.click();
+  URL.revokeObjectURL(url);
+};
 const USERS_DEFAULT = { admin:{ name:"Admin", role:"admin", pass:"admin123" } };
  
 const { useState, useEffect } = React;
@@ -264,7 +324,7 @@ function Configuracoes({users,onSave}){
  
 const VAZIO={id:"",nome:"",idade:"",tel:"",email:"",cidade:"",dataPed:hoje(),prazo:"",
   servico:SERVICOS[0],valor:PRECOS[SERVICOS[0]],desc:0,forma:"Pix",
-  stPgto:"Pendente",stServ:"Aguardando",entregaReal:"",obs:"",indicado:"",operador:""};
+  stPgto:"Pendente",stServ:"Aguardando",entregaReal:"",obs:"",indicado:"",operador:"",diasUteis:5};
  
 function FormPedido({ini,onSave,onCancel,currentUser}){
   const [f,setF]=useState(ini||{...VAZIO,id:uid(),operador:currentUser?.name||""});
@@ -304,8 +364,20 @@ function FormPedido({ini,onSave,onCancel,currentUser}){
       <div style={{background:C.g50,borderRadius:10,padding:16}}>
         <div style={{fontWeight:700,fontSize:13,color:C.navy,marginBottom:12,textTransform:"uppercase",letterSpacing:1}}>📅 Datas e Status</div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-          <Inp label="Data do Pedido" type="date" value={f.dataPed} onChange={e=>set("dataPed",e.target.value)}/>
-          <Inp label="Prazo de Entrega" type="date" value={f.prazo} onChange={e=>set("prazo",e.target.value)}/>
+          <Inp label="Data do Pedido" type="date" value={f.dataPed} onChange={e=>{set("dataPed",e.target.value);set("prazo",addDiasUteis(e.target.value,f.diasUteis||5));}}/>
+          <div style={{display:"flex",flexDirection:"column",gap:4}}>
+            <label style={{fontSize:12,fontWeight:600,color:C.g600,textTransform:"uppercase",letterSpacing:.5}}>Prazo (Dias Úteis)</label>
+            <div style={{display:"flex",gap:8,alignItems:"center"}}>
+              <select value={f.diasUteis||5} onChange={e=>{const d=Number(e.target.value);set("diasUteis",d);set("prazo",addDiasUteis(f.dataPed,d));}}
+                onFocus={ev=>ev.target.style.borderColor=C.gold} onBlur={ev=>ev.target.style.borderColor=C.g200}
+                style={{flex:1,padding:"9px 12px",borderRadius:8,border:"1.5px solid "+C.g200,outline:"none",fontFamily:"inherit",fontSize:14,color:C.g800,background:C.white,cursor:"pointer"}}>
+                <option value={5}>5 dias úteis</option>
+                <option value={7}>7 dias úteis</option>
+              </select>
+              <Btn sm v="gh" onClick={()=>set("prazo",addDiasUteis(f.dataPed,f.diasUteis||5))} style={{whiteSpace:"nowrap"}}>📅 Calcular</Btn>
+            </div>
+            <Inp label="Data do Prazo" type="date" value={f.prazo} onChange={e=>set("prazo",e.target.value)}/>
+          </div>
           <Sel label="Status do Serviço" value={f.stServ} onChange={e=>set("stServ",e.target.value)} options={S_SERV.map(s=>({v:s.l,t:s.i+" "+s.l}))}/>
           <Inp label="Data Entrega Real" type="date" value={f.entregaReal} onChange={e=>set("entregaReal",e.target.value)}/>
           <div style={{gridColumn:"1/-1"}}>
@@ -804,6 +876,8 @@ function App(){
             <Sel value={fSt} onChange={e=>setFSt(e.target.value)} options={["Todos",...S_SERV.map(s=>s.l)].map(s=>({v:s,t:s}))}/>
             {operadores.length>0&&<Sel value={fOp} onChange={e=>setFOp(e.target.value)} options={["Todos",...operadores].map(s=>({v:s,t:s}))}/>}
             <span style={{fontSize:13,color:C.g600,whiteSpace:"nowrap"}}>{filtrados.length} pedido(s)</span>
+            {isAdmin&&<Btn sm v="gh" onClick={()=>exportarCSV(peds)} style={{whiteSpace:"nowrap"}}>📊 Exportar CSV</Btn>}
+            {isAdmin&&<Btn sm v="gh" onClick={()=>exportarCSV(peds)} style={{whiteSpace:"nowrap"}}>📊 Exportar CSV</Btn>}
           </div>
           {filtrados.length===0?(
             <div style={{textAlign:"center",padding:"60px 20px"}}>
@@ -817,7 +891,7 @@ function App(){
             </div>
           )}
         </>}
-        {aba==="dashboard"&&<Dashboard peds={peds} isAdmin={isAdmin}/>}
+        {aba==="dashboard"&&(isAdmin?<FaturamentoGate adminPass={users.admin?.pass||"admin123"}><Dashboard peds={peds} isAdmin={isAdmin}/></FaturamentoGate>:<Dashboard peds={peds} isAdmin={false}/>)}
         {aba==="faturamento"&&isAdmin&&<FaturamentoGate adminPass={users.admin?.pass||"admin123"}><Faturamento peds={peds}/></FaturamentoGate>}
         {aba==="config"&&isAdmin&&<Configuracoes users={users} onSave={u=>setUsers(u)}/>}
       </div>
